@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="main.cs" />
     <Compile Include="System\Text\Json.cs" />
+    <Compile Include="WP-Rest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
