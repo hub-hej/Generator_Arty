@@ -10,6 +10,19 @@ using WP;
 
 public class Art
 {
+    private static readonly Dictionary<string, int> Categories = new Dictionary<string, int>
+    {
+        { "Bez kategorii", 1 },
+        { "Blog", 2 },
+        { "Literatura", 3 },
+        { "Ekrany akustyczne", 27 },
+        { "Archiwizacja danych", 32 },
+        { "Kunststoffzaune (Ogrodzenia plastikowe)", 92 },
+        { "Ekrany dźwiękochłonne", 112 },
+        { "Ekrany akustyczne cena", 118 },
+        { "Informatyczna obsługa firm", 321 },
+        { "Kompleksowa obsługa informatyczna", 416 },
+    };
     public static async Task Main(string[] args)
     {
         WP.Rest rest = new WP.Rest();
@@ -19,6 +32,10 @@ public class Art
         string content = "Twolny";
         string authToken = "Basic YWt0ZToydm9EIHUwRTYgQVQ4RyB4ZGV1IGI5WFQgU2IwUA==";
 
-        await rest.CreatePostAsync(wordpressUrl, title, content, authToken); //Metoda, która tworzy post na Wordpressie
+        // Użytkownik wybiera kategorie
+        int[] selectedCategories = { /* Categories["Blog"], Categories["Literatura"] && */ 92}; // Przykładowe wybrane kategorie
+        int[] selectedTags = {  }; // Przykładowe ID tagów
+
+        await rest.CreatePostAsync(wordpressUrl, title, content, authToken, selectedCategories, selectedTags);
     }
 }
