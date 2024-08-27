@@ -30,5 +30,6 @@ public class Art
             response.EnsureSuccessStatusCode(); //Sprawdza czy odpowiedź jest sukcesem, jak nie zgłasza wyjątek
             var responseBody = await response.Content.ReadAsStringAsync(); //Odczytuje odpowiedzi jako ciąg znaków
             Console.WriteLine(responseBody); // Wypisuje na konsoli
+            Console.WriteLine(responseBody); // Wypisuje na konsoli
     }
 }
