@@ -10,19 +10,16 @@ using WP;
 
 public class Art
 {
-    private static readonly Dictionary<string, int> Categories = new Dictionary<string, int>
+    public class Category
     {
-        { "Bez kategorii", 1 },
-        { "Blog", 2 },
-        { "Literatura", 3 },
-        { "Ekrany akustyczne", 27 },
-        { "Archiwizacja danych", 32 },
-        { "Kunststoffzaune (Ogrodzenia plastikowe)", 92 },
-        { "Ekrany dźwiękochłonne", 112 },
-        { "Ekrany akustyczne cena", 118 },
-        { "Informatyczna obsługa firm", 321 },
-        { "Kompleksowa obsługa informatyczna", 416 },
-    };
+        public int id { get; set; }
+        public string name { get; set; }
+    }
+    public class Tag
+    {
+        public int id { get; set; }
+        public string name { get; set; }
+    }
     public static async Task Main(string[] args)
     {
         WP.Rest rest = new WP.Rest();
@@ -32,10 +29,37 @@ public class Art
         string content = "Twolny";
         string authToken = "Basic YWt0ZToydm9EIHUwRTYgQVQ4RyB4ZGV1IGI5WFQgU2IwUA==";
 
-        // Użytkownik wybiera kategorie
-        int[] selectedCategories = { /* Categories["Blog"], Categories["Literatura"] && */ 92}; // Przykładowe wybrane kategorie
-        int[] selectedTags = {  }; // Przykładowe ID tagów
+        // Sprawdzamy i dodajemy kategorię
+        string newCategoryName = "";
+        if (string.IsNullOrWhiteSpace(newCategoryName))
+        {
+            newCategoryName = "Bez kategorii";
+        }
+        int newCategoryId = await rest.CheckAndAddCategoryAsync(wordpressUrl, authToken, newCategoryName);
 
-        await rest.CreatePostAsync(wordpressUrl, title, content, authToken, selectedCategories, selectedTags);
+        // Sprawdzamy i dodajemy tag (tylko jeśli nie jest pusty)
+        string newTagName = "brama";
+        int newTagId = -1;
+        if (!string.IsNullOrWhiteSpace(newTagName))
+        {
+            newTagId = await rest.CheckAndAddTagAsync(wordpressUrl, authToken, newTagName);
+        }
+
+        if (newCategoryId != -1)
+        {
+            var categories = await rest.GetCategoriesAsync(wordpressUrl, authToken);
+            var newCategory = categories.FirstOrDefault(c => c.id == newCategoryId);
+
+            int[] selectedCategories = newCategory != null ? new int[] { newCategory.id } : new int[] { 1 };
+
+            // Jeśli tag został poprawnie utworzony lub wybrany
+            int[] selectedTags = newTagId != -1 ? new int[] { newTagId } : new int[] { };
+
+            await rest.CreatePostAsync(wordpressUrl, title, content, authToken, selectedCategories, selectedTags);
+        }
+        else
+        {
+            Console.WriteLine("Nie udało się dodać kategorii. Post nie zostanie utworzony.");
+        }
     }
 }
