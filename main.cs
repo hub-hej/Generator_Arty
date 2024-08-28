@@ -30,7 +30,7 @@ public class Art
         string authToken = "Basic YWt0ZToydm9EIHUwRTYgQVQ4RyB4ZGV1IGI5WFQgU2IwUA==";
 
         // Sprawdzamy i dodajemy kategorię
-        string newCategoryName = "";
+        string newCategoryName = "sdasda";
         if (string.IsNullOrWhiteSpace(newCategoryName))
         {
             newCategoryName = "Bez kategorii";
@@ -38,7 +38,7 @@ public class Art
         int newCategoryId = await rest.CheckAndAddCategoryAsync(wordpressUrl, authToken, newCategoryName);
 
         // Sprawdzamy i dodajemy tag (tylko jeśli nie jest pusty)
-        string newTagName = "brama";
+        string newTagName = "bezpieczeństwo";
         int newTagId = -1;
         if (!string.IsNullOrWhiteSpace(newTagName))
         {
@@ -59,7 +59,8 @@ public class Art
         }
         else
         {
-            Console.WriteLine("Nie udało się dodać kategorii. Post nie zostanie utworzony.");
+            Console.WriteLine("Nie udało się dodać kategorii i taga. Post nie zostanie utworzony. Naciśnij jakikolwiek przycisk by zamknąć konsole.");
+            Console.ReadKey();
         }
     }
 }

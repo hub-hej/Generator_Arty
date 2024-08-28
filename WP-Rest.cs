@@ -30,6 +30,18 @@ namespace WP
             return categories;
         }
 
+        public async Task<List<Tag>> GetTagsAsync(string wordpressUrl, string authToken)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{wordpressUrl}/wp-json/wp/v2/tags?per_page=100");
+            request.Headers.Add("Authorization", authToken);
+
+            var response = await client.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var tags = JsonConvert.DeserializeObject<List<Tag>>(responseBody);
+            return tags;
+        }
+
         public async Task<int> AddCategoryAsync(string wordpressUrl, string authToken, string categoryName)
         {
             var categoryData = new
@@ -55,12 +67,6 @@ namespace WP
 
         public async Task<int> AddTagAsync(string wordpressUrl, string authToken, string tagName)
         {
-            if (!IsValidTagName(tagName))
-            {
-                Console.WriteLine($"Błąd: Nieprawidłowa nazwa tagu '{tagName}'.");
-                return -1; // Zwróć -1 lub inne wartości oznaczające błąd
-            }
-
             var tagData = new
             {
                 name = tagName,
@@ -70,7 +76,7 @@ namespace WP
             var json = JsonConvert.SerializeObject(tagData);
             var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{wordpressUrl}/wp-json/wp/v2/tags?per_page=100");
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{wordpressUrl}/wp-json/wp/v2/tags");
             request.Headers.Add("Authorization", authToken);
             request.Content = stringContent;
 
@@ -82,23 +88,11 @@ namespace WP
             return createdTag.id;
         }
 
-        public async Task<List<Tag>> GetTagsAsync(string wordpressUrl, string authToken)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{wordpressUrl}/wp-json/wp/v2/tags?per_page=100");
-            request.Headers.Add("Authorization", authToken);
-
-            var response = await client.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-            var responseBody = await response.Content.ReadAsStringAsync();
-            var tags = JsonConvert.DeserializeObject<List<Tag>>(responseBody);
-            return tags;
-        }
-
         public async Task<int> CheckAndAddCategoryAsync(string wordpressUrl, string authToken, string categoryName)
         {
             if (!IsValidCategoryName(categoryName))
             {
-                Console.WriteLine($"Błąd: Nieprawidłowa nazwa kategorii '{categoryName}'. Nazwa nie może być tylko liczbą lub liczbą z literami.");
+                Console.WriteLine($"Błąd: Nieprawidłowa nazwa kategorii '{categoryName}'. Nazwa nie może zawierać cyfr.");
                 return -1; // Zwróć -1 lub inne wartości oznaczające błąd
             }
 
@@ -130,7 +124,7 @@ namespace WP
         {
             if (!IsValidTagName(tagName))
             {
-                Console.WriteLine($"Błąd: Nieprawidłowa nazwa tagu '{tagName}'.");
+                Console.WriteLine($"Błąd: Nieprawidłowa nazwa tagu '{tagName}'. Nazwa nie może zawierać cyfr.");
                 return -1; // Zwróć -1 lub inne wartości oznaczające błąd
             }
 
@@ -158,10 +152,10 @@ namespace WP
             }
         }
 
+
         private bool IsValidCategoryName(string categoryName)
         {
             // Sprawdź, czy kategoria zawiera liczby
-            // Wyrażenie regularne sprawdzające, czy nazwa zawiera liczby
             string pattern = @"\d";
             return !System.Text.RegularExpressions.Regex.IsMatch(categoryName, pattern);
         }
@@ -169,9 +163,8 @@ namespace WP
         private bool IsValidTagName(string tagName)
         {
             // Sprawdź, czy tag zawiera liczby
-            // Wyrażenie regularne sprawdzające, czy nazwa zawiera liczby
             string pattern = @"\d";
-            return !System.Text.RegularExpressions.Regex.IsMatch(tagName, pattern) && !string.IsNullOrWhiteSpace(tagName);
+            return !System.Text.RegularExpressions.Regex.IsMatch(tagName, pattern);
         }
 
         public async Task CreatePostAsync(string wordpressUrl, string title, string content, string authToken, int[] categories, int[] tags)
@@ -181,14 +174,8 @@ namespace WP
             {
                 categories = new int[] { 1 }; // Bez kategorii
             }
-            else
-            {
-                foreach (var categoryId in categories)
-                {
-                    // Sprawdzanie kategorii zostało przeniesione do CheckAndAddCategoryAsync
-                }
-            }
 
+            bool hasInvalidTag = false;
             if (tags == null || tags.Length == 0)
             {
                 tags = new int[] { };
@@ -197,8 +184,19 @@ namespace WP
             {
                 foreach (var tagId in tags)
                 {
-                    // Logika sprawdzania tagów (jeśli potrzebna)
+                    var tagsList = await GetTagsAsync(wordpressUrl, authToken);
+                    if (!tagsList.Any(t => t.id == tagId && IsValidTagName(t.name)))
+                    {
+                        hasInvalidTag = true;
+                        break;
+                    }
                 }
+            }
+
+            if (hasInvalidTag)
+            {
+                Console.WriteLine("Błąd: Jeden lub więcej tagów jest nieprawidłowych.");
+                return;
             }
 
             var postData = new
