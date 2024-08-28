@@ -6,7 +6,11 @@ using Newtonsoft.Json;
 
 namespace WP
 {
-
+    public class MediaItem
+    {
+        public int id { get; set; }
+        public string link { get; set; }
+    }
     public class Media
     {
         private readonly HttpClient client;

@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
-using WP;  // Dodaj tę linię, aby odwołać się do przestrzeni nazw WP
+using WP;
 
 class Program
 {
-    public class MediaItem
-    {
-        public int id { get; set; }
-        public string link { get; set; }
-    }
     static async Task Main(string[] args)
     {
         string wordpressUrl = "https://szybowanie.pl";
