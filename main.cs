@@ -25,8 +25,8 @@ public class Art
         WP.Rest rest = new WP.Rest();
         var art = new Art();
         string wordpressUrl = "https://szybowanie.pl/";
-        string title = "Tsaddsa";
-        string content = "Twolny";
+        string title = "Test";
+        string content = "Dowolny tekst przykładowy";
         string authToken = "Basic YWt0ZTo0REoyIGJHeTkgcmVsRiBEc1d1IHFnWkYgYUFPVA==";
 
         // Sprawdzamy i dodajemy kategorię
