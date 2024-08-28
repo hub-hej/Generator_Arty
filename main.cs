@@ -9,7 +9,7 @@ public class Program
         var media = new Media();
         string wordpressUrl = "https://szybowanie.pl";
         string authToken = "YWt0ZTo0REoyIGJHeTkgcmVsRiBEc1d1IHFnWkYgYUFPVA==";
-        string filePath = @"C:\Users\akte\Downloads\jablko.jpg";
+        string filePath = @"C:\Users\akte\Downloads\minionki.gif";
 
         try
         {
