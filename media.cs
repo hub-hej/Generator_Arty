@@ -11,6 +11,7 @@ namespace WP
         public int id { get; set; }
         public string link { get; set; }
     }
+
     public class Media
     {
         private readonly HttpClient client;
@@ -33,7 +34,7 @@ namespace WP
             using (var content = new MultipartFormDataContent())
             {
                 var fileContent = new StreamContent(fileStream);
-                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg"); // Zmien na "image/png" jeśli używasz PNG
                 content.Add(fileContent, "file", fileName);
 
                 var request = new HttpRequestMessage(HttpMethod.Post, $"{wordpressUrl}/wp-json/wp/v2/media");
@@ -43,9 +44,14 @@ namespace WP
                 try
                 {
                     var response = await client.SendAsync(request);
+
+                    // Debugowanie - wyświetl kod odpowiedzi i treść
+                    Console.WriteLine($"Status Code: {response.StatusCode}");
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Response: {responseBody}");
+
                     response.EnsureSuccessStatusCode();
 
-                    var responseBody = await response.Content.ReadAsStringAsync();
                     var mediaItem = JsonConvert.DeserializeObject<MediaItem>(responseBody);
 
                     return mediaItem.id;
