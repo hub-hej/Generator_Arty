@@ -85,7 +85,6 @@ namespace WP
                         break;
                 }
 
-
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
                 content.Add(fileContent, "file", fileName);
 
