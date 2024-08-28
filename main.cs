@@ -24,13 +24,13 @@ public class Art
     {
         WP.Rest rest = new WP.Rest();
         var art = new Art();
-        string wordpressUrl = "https://esc2012-moscow.org/";
+        string wordpressUrl = "https://szybowanie.pl/";
         string title = "Tsaddsa";
         string content = "Twolny";
-        string authToken = "Basic YWt0ZToydm9EIHUwRTYgQVQ4RyB4ZGV1IGI5WFQgU2IwUA==";
+        string authToken = "Basic YWt0ZTo0REoyIGJHeTkgcmVsRiBEc1d1IHFnWkYgYUFPVA==";
 
         // Sprawdzamy i dodajemy kategorię
-        string newCategoryName = "sdasda";
+        string newCategoryName = "drukarki i plotery";
         if (string.IsNullOrWhiteSpace(newCategoryName))
         {
             newCategoryName = "Bez kategorii";
