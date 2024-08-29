@@ -18,16 +18,18 @@ namespace WP
     public class Media
     {
         private readonly HttpClient client;
+        private readonly Configuration config;
 
-        public Media()
+        public Media(Configuration configuration)
         {
             client = new HttpClient();
+            config = configuration;
         }
 
-        public async Task<List<MediaItem>> GetMediaByFilenameAsync(string wordpressUrl, string authToken, string fileName)
+        public async Task<List<MediaItem>> GetMediaByFilenameAsync(string fileName)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{wordpressUrl}/wp-json/wp/v2/media?search={fileName}");
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{config.WordPressUrl}/wp-json/wp/v2/media?search={fileName}");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", config.AuthToken);
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -37,7 +39,7 @@ namespace WP
             return mediaItems;
         }
 
-        public async Task<int> UploadMediaAsync(string wordpressUrl, string authToken, string filePath)
+        public async Task<int> UploadMediaAsync(string filePath)
         {
             if (!File.Exists(filePath))
             {
@@ -49,7 +51,7 @@ namespace WP
             var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
 
             // Check if media already exists
-            var existingMediaItems = await GetMediaByFilenameAsync(wordpressUrl, authToken, fileName);
+            var existingMediaItems = await GetMediaByFilenameAsync(fileName);
             if (existingMediaItems.Count > 0)
             {
                 Console.WriteLine($"Media with filename '{fileName}' already exists.");
@@ -62,7 +64,7 @@ namespace WP
 
                 string mimeType;
 
-                switch (fileExtension.ToLower())
+                switch (fileExtension)
                 {
                     case ".jpg":
                     case ".jpeg":
@@ -88,8 +90,8 @@ namespace WP
                 fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType);
                 content.Add(fileContent, "file", fileName);
 
-                var request = new HttpRequestMessage(HttpMethod.Post, $"{wordpressUrl}/wp-json/wp/v2/media");
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{config.WordPressUrl}/wp-json/wp/v2/media");
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", config.AuthToken);
                 request.Content = content;
 
                 try
