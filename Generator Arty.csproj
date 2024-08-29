@@ -36,7 +36,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="WPCoordinator.cs" />
     <Compile Include="main.cs" />
     <Compile Include="System\Text\Json.cs" />
   </ItemGroup>

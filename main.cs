@@ -1,34 +1,64 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
+using WP; // Upewnij się, że przestrzeń nazw WP jest używana
 
-public class Art
+public class Program
 {
     public static async Task Main(string[] args)
     {
-        var art = new Art();
-        string wordpressUrl = "https://esc2012-moscow.org/";
-        string title = "Tsaddsa";
-        string content = "Twolny";
-        string authToken = "Basic YWt0ZToydm9EIHUwRTYgQVQ4RyB4ZGV1IGI5WFQgU2IwUA==";
+        var config = new Configuration(
+            "https://szybowanie.pl",
+            "YWt0ZTo0REoyIGJHeTkgcmVsRiBEc1d1IHFnWkYgYUFPVA=="
+        );
 
-        await art.CreatePostAsync(wordpressUrl, title, content, authToken); //Metoda, która tworzy post na Wordpressie
-    }
+        // Utworzenie instancji serwisów
+        var mediaService = new Media(config);
+        var restService = new Rest(config);
 
-    public async Task CreatePostAsync(string wordpressUrl, string title, string content, string authToken)
-    {
-            var client = new HttpClient(); //Tworzy instancje HttpClient, który wysyła żądanie HTTP i usuwany jest po zakończeniu blogu 
-            //Łączy URL z Wordpressem z resztą ścieżki, dodając tytuł i tekst.
-            //Uri.EscapeDataString -> Koduje parametry w bezpieczny sposób dla URL
-            string fullUrl = $"{wordpressUrl}/wp-json/wp/v2/posts?content={Uri.EscapeDataString(content)}&title={Uri.UnescapeDataString(title)}"; 
-            var request = new HttpRequestMessage(HttpMethod.Post, fullUrl); //Tworzy wiadomość typu POST z podanym URL=em
-            request.Headers.Add("Authorization", authToken); //Dodaje nagłówek z tokenem, by uwierzytelnić żadanie
-            var response = await client.SendAsync(request); //Wysyła asynchroniczne żadanie HTTP, czekając na odpowiedź
-            response.EnsureSuccessStatusCode(); //Sprawdza czy odpowiedź jest sukcesem, jak nie zgłasza wyjątek
-            var responseBody = await response.Content.ReadAsStringAsync(); //Odczytuje odpowiedzi jako ciąg znaków
-            Console.WriteLine(responseBody); // Wypisuje na konsoli
+        // Przykładowe dane do posta
+        string filePath = @"C:\Users\akte\Downloads\minionki.gif";
+        string title = "Testowy Post";
+        string content = "Treść testowego postu";
+
+        try
+        {
+            // Upload media and get media ID
+            int mediaId = await mediaService.UploadMediaAsync(filePath);
+            Console.WriteLine($"Media uploaded with ID: {mediaId}");
+
+            // Sprawdzanie i dodawanie kategorii oraz tagów
+            string newCategoryName = "drukarki i plotery";
+            int newCategoryId = await restService.CheckAndAddCategoryAsync(newCategoryName);
+
+            string newTagName = "bezpieczeństwo";
+            int newTagId = -1;
+            if (!string.IsNullOrWhiteSpace(newTagName))
+            {
+                newTagId = await restService.CheckAndAddTagAsync(newTagName);
+            }
+
+            if (newCategoryId != -1)
+            {
+                var categories = await restService.GetCategoriesAsync();
+                var newCategory = categories.FirstOrDefault(c => c.id == newCategoryId);
+
+                int[] selectedCategories = newCategory != null ? new int[] { newCategory.id } : new int[] { 1 };
+                int[] selectedTags = newTagId != -1 ? new int[] { newTagId } : new int[] { };
+
+                // Tworzenie posta
+                await restService.CreatePostAsync(title, content, selectedCategories, selectedTags);
+
+                Console.WriteLine("Post created successfully.");
+            }
+            else
+            {
+                Console.WriteLine("Nie udało się dodać kategorii i taga. Post nie zostanie utworzony.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
 }
