@@ -12,16 +12,18 @@ namespace WP
     public class Rest
     {
         private readonly HttpClient client;
+        private readonly Configuration config;
 
-        public Rest()
+        public Rest(Configuration configuration)
         {
             client = new HttpClient();
+            config = configuration;
         }
 
-        public async Task<List<Category>> GetCategoriesAsync(string wordpressUrl, string authToken)
+        public async Task<List<Category>> GetCategoriesAsync()
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{wordpressUrl}/wp-json/wp/v2/categories?per_page=100");
-            request.Headers.Add("Authorization", authToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{config.WordPressUrl}/wp-json/wp/v2/categories?per_page=100");
+            request.Headers.Add("Authorization", config.AuthToken);
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -30,10 +32,10 @@ namespace WP
             return categories;
         }
 
-        public async Task<List<Tag>> GetTagsAsync(string wordpressUrl, string authToken)
+        public async Task<List<Tag>> GetTagsAsync()
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{wordpressUrl}/wp-json/wp/v2/tags?per_page=100");
-            request.Headers.Add("Authorization", authToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{config.WordPressUrl}/wp-json/wp/v2/tags?per_page=100");
+            request.Headers.Add("Authorization", config.AuthToken);
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -42,7 +44,7 @@ namespace WP
             return tags;
         }
 
-        public async Task<int> AddCategoryAsync(string wordpressUrl, string authToken, string categoryName)
+        public async Task<int> AddCategoryAsync(string categoryName)
         {
             var categoryData = new
             {
@@ -53,8 +55,8 @@ namespace WP
             var json = JsonConvert.SerializeObject(categoryData);
             var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{wordpressUrl}/wp-json/wp/v2/categories?per_page=100");
-            request.Headers.Add("Authorization", authToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{config.WordPressUrl}/wp-json/wp/v2/categories?per_page=100");
+            request.Headers.Add("Authorization", config.AuthToken);
             request.Content = stringContent;
 
             var response = await client.SendAsync(request);
@@ -65,7 +67,7 @@ namespace WP
             return createdCategory.id;
         }
 
-        public async Task<int> AddTagAsync(string wordpressUrl, string authToken, string tagName)
+        public async Task<int> AddTagAsync(string tagName)
         {
             var tagData = new
             {
@@ -76,8 +78,8 @@ namespace WP
             var json = JsonConvert.SerializeObject(tagData);
             var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"{wordpressUrl}/wp-json/wp/v2/tags");
-            request.Headers.Add("Authorization", authToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{config.WordPressUrl}/wp-json/wp/v2/tags");
+            request.Headers.Add("Authorization", config.AuthToken);
             request.Content = stringContent;
 
             var response = await client.SendAsync(request);
@@ -88,15 +90,15 @@ namespace WP
             return createdTag.id;
         }
 
-        public async Task<int> CheckAndAddCategoryAsync(string wordpressUrl, string authToken, string categoryName)
+        public async Task<int> CheckAndAddCategoryAsync(string categoryName)
         {
             if (!IsValidCategoryName(categoryName))
             {
                 Console.WriteLine($"Błąd: Nieprawidłowa nazwa kategorii '{categoryName}'. Nazwa nie może zawierać cyfr.");
-                return -1; // Zwróć -1 lub inne wartości oznaczające błąd
+                return -1;
             }
 
-            var categories = await GetCategoriesAsync(wordpressUrl, authToken);
+            var categories = await GetCategoriesAsync();
             var existingCategory = categories.FirstOrDefault(c => c.name.Equals(categoryName, StringComparison.OrdinalIgnoreCase));
 
             if (existingCategory != null)
@@ -107,7 +109,7 @@ namespace WP
             else
             {
                 Console.WriteLine($"Kategoria '{categoryName}' nie istnieje. Tworzenie nowej kategorii...");
-                var newCategoryId = await AddCategoryAsync(wordpressUrl, authToken, categoryName);
+                var newCategoryId = await AddCategoryAsync(categoryName);
                 if (newCategoryId == -1)
                 {
                     Console.WriteLine($"Nie udało się stworzyć kategorii '{categoryName}'.");
@@ -120,15 +122,15 @@ namespace WP
             }
         }
 
-        public async Task<int> CheckAndAddTagAsync(string wordpressUrl, string authToken, string tagName)
+        public async Task<int> CheckAndAddTagAsync(string tagName)
         {
             if (!IsValidTagName(tagName))
             {
                 Console.WriteLine($"Błąd: Nieprawidłowa nazwa tagu '{tagName}'. Nazwa nie może zawierać cyfr.");
-                return -1; // Zwróć -1 lub inne wartości oznaczające błąd
+                return -1;
             }
 
-            var tags = await GetTagsAsync(wordpressUrl, authToken);
+            var tags = await GetTagsAsync();
             var existingTag = tags.FirstOrDefault(t => t.name.Equals(tagName, StringComparison.OrdinalIgnoreCase));
 
             if (existingTag != null)
@@ -139,7 +141,7 @@ namespace WP
             else
             {
                 Console.WriteLine($"Tag '{tagName}' nie istnieje. Tworzenie nowego tagu...");
-                var newTagId = await AddTagAsync(wordpressUrl, authToken, tagName);
+                var newTagId = await AddTagAsync(tagName);
                 if (newTagId == -1)
                 {
                     Console.WriteLine($"Nie udało się stworzyć tagu '{tagName}'.");
@@ -152,27 +154,23 @@ namespace WP
             }
         }
 
-
         private bool IsValidCategoryName(string categoryName)
         {
-            // Sprawdź, czy kategoria zawiera liczby
             string pattern = @"\d";
             return !System.Text.RegularExpressions.Regex.IsMatch(categoryName, pattern);
         }
 
         private bool IsValidTagName(string tagName)
         {
-            // Sprawdź, czy tag zawiera liczby
             string pattern = @"\d";
             return !System.Text.RegularExpressions.Regex.IsMatch(tagName, pattern);
         }
 
-        public async Task CreatePostAsync(string wordpressUrl, string title, string content, string authToken, int[] categories, int[] tags)
+        public async Task CreatePostAsync(string title, string content, int[] categories, int[] tags)
         {
-
             if (categories == null || categories.Length == 0)
             {
-                categories = new int[] { 1 }; // Bez kategorii
+                categories = new int[] { 1 };
             }
 
             bool hasInvalidTag = false;
@@ -184,7 +182,7 @@ namespace WP
             {
                 foreach (var tagId in tags)
                 {
-                    var tagsList = await GetTagsAsync(wordpressUrl, authToken);
+                    var tagsList = await GetTagsAsync();
                     if (!tagsList.Any(t => t.id == tagId && IsValidTagName(t.name)))
                     {
                         hasInvalidTag = true;
@@ -211,10 +209,10 @@ namespace WP
             var json = JsonConvert.SerializeObject(postData);
             var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
 
-            string fullUrl = $"{wordpressUrl}/wp-json/wp/v2/posts";
+            string fullUrl = $"{config.WordPressUrl}/wp-json/wp/v2/posts";
 
             var request = new HttpRequestMessage(HttpMethod.Post, fullUrl);
-            request.Headers.Add("Authorization", authToken);
+            request.Headers.Add("Authorization", config.AuthToken);
             request.Content = stringContent;
 
             var response = await client.SendAsync(request);

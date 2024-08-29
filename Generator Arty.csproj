@@ -37,6 +37,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Configuration.cs" />
     <Compile Include="main.cs" />
     <Compile Include="System\Text\Json.cs" />
     <Compile Include="WP-Rest.cs" />

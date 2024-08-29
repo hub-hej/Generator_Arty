@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 using WP;
 
@@ -22,12 +17,15 @@ public class Art
     }
     public static async Task Main(string[] args)
     {
-        WP.Rest rest = new WP.Rest();
-        var art = new Art();
-        string wordpressUrl = "https://szybowanie.pl/";
+        var config = new Configuration(
+            "https://szybowanie.pl",
+            "Basic YWt0ZTo0REoyIGJHeTkgcmVsRiBEc1d1IHFnWkYgYUFPVA=="
+        );
+
+        var restService = new Rest(config);
+
         string title = "Test";
         string content = "Dowolny tekst przykładowy";
-        string authToken = "Basic YWt0ZTo0REoyIGJHeTkgcmVsRiBEc1d1IHFnWkYgYUFPVA==";
 
         // Sprawdzamy i dodajemy kategorię
         string newCategoryName = "drukarki i plotery";
@@ -35,19 +33,19 @@ public class Art
         {
             newCategoryName = "Bez kategorii";
         }
-        int newCategoryId = await rest.CheckAndAddCategoryAsync(wordpressUrl, authToken, newCategoryName);
+        int newCategoryId = await restService.CheckAndAddCategoryAsync(newCategoryName);
 
         // Sprawdzamy i dodajemy tag (tylko jeśli nie jest pusty)
         string newTagName = "bezpieczeństwo";
         int newTagId = -1;
         if (!string.IsNullOrWhiteSpace(newTagName))
         {
-            newTagId = await rest.CheckAndAddTagAsync(wordpressUrl, authToken, newTagName);
+            newTagId = await restService.CheckAndAddTagAsync(newTagName);
         }
 
         if (newCategoryId != -1)
         {
-            var categories = await rest.GetCategoriesAsync(wordpressUrl, authToken);
+            var categories = await restService.GetCategoriesAsync();
             var newCategory = categories.FirstOrDefault(c => c.id == newCategoryId);
 
             int[] selectedCategories = newCategory != null ? new int[] { newCategory.id } : new int[] { 1 };
@@ -55,7 +53,7 @@ public class Art
             // Jeśli tag został poprawnie utworzony lub wybrany
             int[] selectedTags = newTagId != -1 ? new int[] { newTagId } : new int[] { };
 
-            await rest.CreatePostAsync(wordpressUrl, title, content, authToken, selectedCategories, selectedTags);
+            await restService.CreatePostAsync(title, content, selectedCategories, selectedTags);
         }
         else
         {
