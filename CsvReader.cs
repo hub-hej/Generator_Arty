@@ -34,10 +34,29 @@ public class CsvReader
         try
         {
             var lines = File.ReadAllLines(filePath);
-            for (int i = 1; i < lines.Length; i++) // Rozpocznij od drugiej linii (indeks 1), aby pominąć nagłówki
+
+            // Sprawdzenie nagłówków
+            var expectedHeaders = new string[] { "Domena", "Login WP", "Haslo WP", "API Key (Wordpress)", "Token (Visual Studio i Postman) = Media", "Token (Visual Studio i Postman) = Post", "Dodatkowe informacje" };
+            var headers = lines[0].Split(',');
+
+            if (headers.Length != expectedHeaders.Length)
+            {
+                throw new Exception("Struktura pliku CSV jest nieprawidłowa: Niewłaściwa liczba kolumn. Domyślna liczba kolumn to 7 [Domena, Login WP, Haslo WP, API Key (Wordpress), Token (Visual Studio i Postman) = Media, Token (Visual Studio i Postman) = Post, Dodatkowe informacje]");
+            }
+
+            for (int i = 0; i < headers.Length; i++)
+            {
+                if (headers[i].Trim() != expectedHeaders[i])
+                {
+                    throw new Exception($"Struktura pliku CSV jest nieprawidłowa: Oczekiwano nagłówka '{expectedHeaders[i]}', ale znaleziono '{headers[i]}'.");
+                }
+            }
+
+            // Przetwarzanie danych (pomijamy nagłówki)
+            for (int i = 1; i < lines.Length; i++)
             {
                 var values = lines[i].Split(',');
-                if (values.Length >= 7)
+                if (values.Length == expectedHeaders.Length)
                 {
                     var credential = new WordPressCredentials(
                         values[0], // Domena 
@@ -49,6 +68,10 @@ public class CsvReader
                         values[6]  // Dodatkowe informacje
                     );
                     credentials.Add(credential);
+                }
+                else
+                {
+                    Console.WriteLine($"Ostrzeżenie: Wiersz {i + 1} ma niewłaściwą liczbę kolumn. Zostanie pominięty.");
                 }
             }
         }
